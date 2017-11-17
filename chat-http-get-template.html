@@ -105,7 +105,7 @@
             });
             var xhr = new XMLHttpRequest();
             xhr.open('POST', '/chat', true);
-            xhr.setRequestHeader("Content-type", "application/json");
+            xhr.setRequestHeader('Content-Type', 'text/plain');
             xhr.onreadystatechange = function() {
               if(xhr.readyState == XMLHttpRequest.DONE && xhr.status == 200) {
                 app.addMessage({
@@ -116,7 +116,7 @@
               });
               }
             }
-            xhr.send(JSON.stringify({ payload: app.message, user: app.userId })); 
+            xhr.send(app.message); 
             app.message = '';
           },
           addMessage(message) {
@@ -142,25 +142,7 @@
               e.style.maxHeight = null;
             }
           },
-          generateUniqueId(len) {
-            var ALPHABET = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-            var id = '';
-            for (var i = 0; i < len; i++) {
-              id += ALPHABET.charAt(Math.floor(Math.random() * ALPHABET.length));
-            }
-            return id;
-          },
           init() {
-            // get userId
-            if (typeof (Storage) !== "undefined") {
-              app.userId = localStorage.getItem("userId");
-            }
-            if (!app.userId) {
-              app.userId = app.generateUniqueId(8);
-              if (typeof (Storage) !== "undefined") {
-                localStorage.setItem("userId", app.userId);
-              }
-            }
             // register with window onresize event
             window.onresize = function () {
               app.resizeMessageContainer();
