@@ -1,0 +1,17 @@
+<html>
+  <body>
+    Image classified as:<br>
+    <b>{{ result.images.0.classifiers.0.classes.0.class }}</b>
+    <br>
+    <b>{{ result.images.0.classifiers.0.classes.0.score }}</b>
+    <br>
+    <br>
+    <form action="/classify" method="post" enctype="multipart/form-data">
+      Select image to upload:
+      <br>
+      <input type="file" name="fileToUpload" id="fileToUpload">
+      <br>
+      <input type="submit" value="Upload Image" name="submit">
+    </form>
+  </body>
+</html>

@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <style>
+    html, body {
+      height: 100%;
+      padding: 0px;
+      margin: 0px;
+      overflow: hidden;
+      font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+      font-size: 14px;
+      color: #333;
+    }
+    hr {
+      margin-top: 20px;
+      margin-bottom: 20px;
+      border: 0;
+      border-top: 1px solid #ccc;
+    }
+    #app {
+      height: 100%;
+    }
+    #chat-container {
+      width: 100%;
+      max-width: 800px;
+      position: absolute;
+      bottom: 0px;
+      margin: 0 auto;
+      left: 0px;
+      right: 0px;
+      padding: 30px;
+    }
+    #chat-message-container {
+      overflow-y: scroll;
+      margin-bottom: 10px;
+    }
+    .chat-msg-body-bot {
+      background-color: #eee;
+      color: black;
+      border-radius: 5px;
+      margin: 10px 50px 10px 0px;
+      padding: 5px 10px 5px 10px;
+    }
+    .chat-msg-body-user {
+      background-color: #34aadc;
+      color: white;
+      border-radius: 5px;
+      margin: 10px 0px 10px 50px;
+      padding: 5px 10px 5px 10px;
+    }
+    #chat-form-input {
+      width: calc(100% - 140px);
+      padding: 6px 12px;
+      font-size: 14px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    #chat-form-submit {
+      width: 100px;
+      padding: 6px 12px;
+      font-size: 14px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+  </style>
+  <script src="https://unpkg.com/vue"></script>
+</head>
+
+<body>
+  <div id="app">
+    <div id="chat-container">
+      <div id="chat-message-container">
+        <div v-for="msg in messages" v-bind:class="[msg.isBot ? 'chat-msg-body-bot' : 'chat-msg-body-user']">
+          <b><span v-html="msg.user"></span></b>:
+          <div v-html="msg.msg"></div>
+        </div>
+      </div>
+      <hr />
+      <div id="chat-form-container">
+        <input id="chat-form-input" type="text" autocomplete="off" placeholder="Enter your message..." v-model="message" v-on:keyup.13="submitMessage">
+        <button id="chat-form-submit" type="submit" v-on:click="submitMessage">Send</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+      var app = new Vue({
+        el: '#app',
+        data: {
+          botName: 'bot',
+          userId: null,
+          message: '',
+          messages: []
+        },
+        methods: {
+          submitMessage: function () {
+            if (app.message.length == 0) {
+              return;
+            }
+            app.addMessage({
+              isBot: false,
+              user: 'Me',
+              ts: new Date(),
+              msg: app.message
+            });
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', '/chat', true);
+            xhr.setRequestHeader("Content-type", "application/json");
+            xhr.onreadystatechange = function() {
+              if(xhr.readyState == XMLHttpRequest.DONE && xhr.status == 200) {
+                app.addMessage({
+                  isBot: true,
+                  user: app.botName,
+                  ts: new Date(),
+                  msg: xhr.responseText
+              });
+              }
+            }
+            xhr.send(JSON.stringify({ payload: app.message, user: app.userId })); 
+            app.message = '';
+          },
+          addMessage(message) {
+            app.messages.push(message);
+            setTimeout(function () {
+              app.scrollMessagesToBottom()
+            }, 100);
+          },
+          scrollMessagesToBottom() {
+            setTimeout(function () {
+              app.resizeMessageContainer();
+              var e = document.getElementById("chat-message-container");
+              e.scrollTop = e.scrollHeight;
+            }, 100);
+          },
+          resizeMessageContainer() {
+            var e = document.getElementById("chat-message-container");
+            var rect = e.getBoundingClientRect();
+            if (rect.top <= 20) {
+              e.style.maxHeight = rect.height + rect.top + 'px';
+            }
+            else {
+              e.style.maxHeight = null;
+            }
+          },
+          generateUniqueId(len) {
+            var ALPHABET = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+            var id = '';
+            for (var i = 0; i < len; i++) {
+              id += ALPHABET.charAt(Math.floor(Math.random() * ALPHABET.length));
+            }
+            return id;
+          },
+          init() {
+            // get userId
+            if (typeof (Storage) !== "undefined") {
+              app.userId = localStorage.getItem("userId");
+            }
+            if (!app.userId) {
+              app.userId = app.generateUniqueId(8);
+              if (typeof (Storage) !== "undefined") {
+                localStorage.setItem("userId", app.userId);
+              }
+            }
+            // register with window onresize event
+            window.onresize = function () {
+              app.resizeMessageContainer();
+            }
+          }
+        }
+      });
+  
+      (function () {
+        // Initialize vue app
+        app.init();
+      })();
+    </script>
+</body>
+</html>
